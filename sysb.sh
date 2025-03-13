@@ -220,24 +220,24 @@ perform_backup() {
     check_permissions "$dest_dir" "destination" || return 1
     
     log "Starting backup from $source_dir to $dest_dir"
+
+# Create exclude parameter array
+local exclude_params=()
+if [ ! -z "$exclude_dirs" ]; then
+    # Save the original IFS value
+    local OLDIFS="$IFS"
+    IFS=':'
+    read -ra ADDR <<< "$exclude_dirs"
+    # Restore original IFS
+    IFS="$OLDIFS"
     
-    # Create exclude parameter string
-    local exclude_params=""
-    if [ ! -z "$exclude_dirs" ]; then
-        # Save the original IFS value
-        local OLDIFS="$IFS"
-        IFS=':'
-        read -ra ADDR <<< "$exclude_dirs"
-        # Restore original IFS
-        IFS="$OLDIFS"
-        
-        for i in "${ADDR[@]}"; do
-            exclude_params="$exclude_params --exclude=\"$i\""
-        done
-    fi
+    for i in "${ADDR[@]}"; do
+        exclude_params+=(--exclude="$i")
+    done
+fi
     
     # Add standard system excludes
-    exclude_params="$exclude_params --exclude=/proc --exclude=/tmp --exclude=/sys --exclude=/dev --exclude=/run --exclude=/mnt --exclude=/media --exclude=/lost+found"
+    exclude_params=""${exclude_params[@]}" --exclude=/proc --exclude=/tmp --exclude=/sys --exclude=/dev --exclude=/run --exclude=/mnt --exclude=/media --exclude=/lost+found"
     
     # Create timestamp for archive naming
     local timestamp=$(date +"%Y%m%d_%H%M%S")
@@ -257,7 +257,7 @@ perform_backup() {
     fi
     
     # Run rsync with progress
-    rsync $rsync_params $exclude_params "$source_dir/" "$temp_dir/" 2>&1 | tee -a "$LOG_FILE"
+    rsync $rsync_params "${exclude_params[@]}" "$source_dir/" "$temp_dir/" 2>&1 | tee -a "$LOG_FILE"
     
     local rsync_status=${PIPESTATUS[0]}
     if [ $rsync_status -ne 0 ]; then
