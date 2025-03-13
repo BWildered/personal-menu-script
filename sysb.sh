@@ -237,7 +237,7 @@ if [ ! -z "$exclude_dirs" ]; then
 fi
     
     # Add standard system excludes
-    exclude_params=""${exclude_params[@]}" --exclude=/proc --exclude=/tmp --exclude=/sys --exclude=/dev --exclude=/run --exclude=/mnt --exclude=/media --exclude=/lost+found"
+    exclude_params="${exclude_params[@]} --exclude=/proc --exclude=/tmp --exclude=/sys --exclude=/dev --exclude=/run --exclude=/mnt --exclude=/media --exclude=/lost+found"
     
     # Create timestamp for archive naming
     local timestamp=$(date +"%Y%m%d_%H%M%S")
