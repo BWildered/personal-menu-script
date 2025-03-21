@@ -102,7 +102,7 @@ add_directory_to_history() {
     local history=$(read_ini "$history_key" "")
     
     # Check if directory is already in history
-    if [[ ! "$history" =~ (^|:)"$dir"($|:) ]]; then
+    if [ -f "$LOG_FILE" ] && [ $(stat -c%s "$LOG_FILE") -gt 5242880 ]; then
         # Add directory to history
         if [ -z "$history" ]; then
             write_ini "$history_key" "$dir"
