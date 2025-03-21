@@ -216,6 +216,7 @@ verify_backup() {
     return 0
 }
 
+
 # Function to perform backup operation
 perform_backup() {
     local source_dir=$(read_ini "source_dir" "")
@@ -271,15 +272,10 @@ perform_backup() {
     fi
     
     # Run rsync with progress
-log "Starting rsync operation..."
-rsync $rsync_params "${exclude_params[@]}" "$source_dir/" "$temp_dir/"
-rsync_status=$?
-log "Rsync operation completed with status: $rsync_status"
-    # Use PIPESTATUS more safely
-    local rsync_status=${PIPESTATUS[0]}
-    if [ -z "$rsync_status" ]; then
-        rsync_status=$?
-    fi
+    log "Starting rsync operation..."
+    rsync $rsync_params "${exclude_params[@]}" "$source_dir/" "$temp_dir/"
+    local rsync_status=$?
+    log "Rsync operation completed with status: $rsync_status"
     
     if [ $rsync_status -ne 0 ]; then
         error "rsync failed with error code $rsync_status"
@@ -289,15 +285,10 @@ log "Rsync operation completed with status: $rsync_status"
     
     # Now create compressed archive with maximum compression
     log "Creating compressed archive $archive_name (with maximum compression)..."
-log "Starting tar compression..."
-XZ_OPT="-$compression_level" tar -cJf "$dest_dir/$archive_name" -C "$temp_dir" .
-tar_status=$?
-log "Tar compression completed with status: $tar_status"
-    # Use PIPESTATUS more safely
-    local tar_status=${PIPESTATUS[0]}
-    if [ -z "$tar_status" ]; then
-        tar_status=$?
-    fi
+    log "Starting tar compression..."
+    XZ_OPT="-$compression_level" tar -cJf "$dest_dir/$archive_name" -C "$temp_dir" .
+    local tar_status=$?
+    log "Tar compression completed with status: $tar_status"
     
     if [ $tar_status -ne 0 ]; then
         error "tar compression failed with error code $tar_status"
@@ -367,8 +358,8 @@ perform_restore() {
     # Extract archive
     log "Extracting backup archive..."
     tar -xJf "$backup_file" -C "$temp_dir" 2>&1 | tee -a "$LOG_FILE"
+    local tar_extract_status=${PIPESTATUS[0]}
     
-    local tar_extract_status=$?
     if [ $tar_extract_status -ne 0 ]; then
         error "Failed to extract backup archive"
         rm -rf "$temp_dir"
@@ -378,8 +369,8 @@ perform_restore() {
     # Sync files to restore location
     log "Syncing files to restore location..."
     rsync -aAXv --info=progress2 "$temp_dir/" "$restore_dir/" 2>&1 | tee -a "$LOG_FILE"
+    local rsync_status=${PIPESTATUS[0]}
     
-    local rsync_status=$?
     if [ $rsync_status -ne 0 ]; then
         error "Failed to sync files to restore location"
         rm -rf "$temp_dir"
@@ -392,7 +383,6 @@ perform_restore() {
     log "Restore completed successfully"
     return 0
 }
-
 # Improved display_menu function
 display_menu() {
 if [ -z "$TERM" ] || [ "$TERM" = "dumb" ]; then
@@ -591,7 +581,6 @@ configure_backup() {
         esac
     done
 }
-
 # Function to configure restore
 configure_restore() {
     local options=("Select backup file" "Select restore directory" "Save and return")
@@ -690,7 +679,6 @@ error_recovery() {
         esac
     done
 }
-
 # Main menu
 main_menu() {
     local options=("Perform Backup" "Perform Restore" "Configure Backup" "Configure Restore" "Show Backup History" "Error Recovery" "About")
@@ -748,10 +736,12 @@ main_menu() {
                 echo "Press any key to continue..."
                 read -n 1
                 ;;
+            *)
+                echo "Invalid choice. Please try again."
+                ;;
         esac
     done
 }
-
 # Check dependencies
 if ! check_dependencies; then
     echo "Missing dependencies. Please install required packages."
