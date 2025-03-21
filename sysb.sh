@@ -94,7 +94,6 @@ write_ini() {
     fi
 }
 
-# Function to add directory to history
 add_directory_to_history() {
     local type="$1"  # source or destination
     local dir="$2"
@@ -102,7 +101,7 @@ add_directory_to_history() {
     local history=$(read_ini "$history_key" "")
     
     # Check if directory is already in history
-    if [ -f "$LOG_FILE" ] && [ $(stat -c%s "$LOG_FILE") -gt 5242880 ]; then
+    if [[ ":$history:" != *":$dir:"* ]]; then
         # Add directory to history
         if [ -z "$history" ]; then
             write_ini "$history_key" "$dir"
@@ -329,7 +328,6 @@ perform_backup() {
     return 0
 }
 
-# Function to perform restore operation
 perform_restore() {
     local backup_file=$(read_ini "last_backup" "")
     local restore_dir=$(read_ini "restore_dir" "/")
@@ -383,6 +381,7 @@ perform_restore() {
     log "Restore completed successfully"
     return 0
 }
+
 # Improved display_menu function
 display_menu() {
 if [ -z "$TERM" ] || [ "$TERM" = "dumb" ]; then
